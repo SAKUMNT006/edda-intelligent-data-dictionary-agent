@@ -42,4 +42,4 @@ Database documentation is often missing or outdated. Technical metadata lacks bu
 
 ### 6) Conversational chat interface
 - Ask natural language questions about schema and joins
-- Answers cite referenced tables/columns and can suggest **SELECT-only** SQL
+- Answers cite referenced tables/columns and can suggest **SELECT-only**
