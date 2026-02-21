@@ -1,0 +1,39 @@
+services:
+  # EDDA metadata store (what EDDA writes into)
+  edda-meta-db:
+    image: pgvector/pgvector:pg16
+    container_name: edda-meta-db
+    environment:
+      POSTGRES_USER: edda
+      POSTGRES_PASSWORD: edda
+      POSTGRES_DB: edda_meta
+    ports:
+      - "5432:5432"
+    volumes:
+      - edda_meta_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edda -d edda_meta"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Demo target DB (what EDDA connects to and scans)
+  edda-demo-db:
+    image: postgres:16
+    container_name: edda-demo-db
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: demo
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./demo/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo -d demo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  edda_meta_data:

@@ -1,45 +1,65 @@
-# EDDA — Elephantidae Data Dictionary Agent
+# EDDA — Elephantidae Data Dictionary Agent (MVP)
 
-EDDA is a software-only solution that connects to enterprise databases (PostgreSQL / SQL Server / Snowflake), automatically generates AI-enhanced data dictionaries, profiles data quality, produces business-friendly documentation, and provides a chat interface for natural-language schema discovery.
+EDDA is a software-only platform that connects to enterprise databases (MVP: PostgreSQL),
+extracts schema metadata, profiles data quality using sampling, generates business-friendly
+data dictionary docs (Markdown + JSON), and provides a chat interface for schema discovery.
 
-This repo is aligned to the Round-2 prototype screens:
-Home → Add Data Source → Scan Setup → Schema Explorer → Columns → Relationships → Quality → Docs → Chat → History/Diff.
+Aligned to prototype flow:
+Home → Add Data Source → Scan Setup → Schema Explorer → Table Tabs (Columns/Relationships/Quality/Docs) → Chat → History.
 
----
+## Quick start
 
-## Why EDDA
-Database documentation is often missing or outdated. Technical metadata lacks business context, so analysts waste time guessing what fields mean, joining tables incorrectly, and trusting incomplete or stale data. EDDA makes schema, relationships, and data health visible and explains it in plain language.
+### 1) Start databases (metadata store + demo target DB)
+```bash
+docker compose up -d
+```
 
----
+### 2) Run backend
+```bash
+cd backend
+python -m venv .venv
+# mac/linux:
+source .venv/bin/activate
+# windows powershell:
+# .venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
 
-## What EDDA does (PS11 alignment)
+### 3) Run frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-### 1) Connects to multiple databases
-- PostgreSQL (implemented first for MVP/demo)
-- SQL Server (adapter stub; planned)
-- Snowflake (adapter stub; planned)
+Open:
+- `http://localhost:3000`
+- `http://localhost:8000/health`
 
-### 2) Extracts complete schema metadata
-- Tables, columns, data types, nullability, defaults
-- PK/FK relationships + constraint names
-- (Optional) indexes / unique constraints where available
+## Demo DB (ready out-of-the-box)
+This repo ships with a demo Postgres DB on port `5433` with PK/FK + some nulls.
+Use it as your target datasource:
+- db_type: postgres
+- host: localhost
+- port: 5433
+- database: demo
+- schema: public
+- username: demo
+- password: demo
 
-### 3) Data quality + on-the-go statistical profiling
-- Completeness (null %)
-- Freshness (timestamp staleness; planned/optional)
-- Key health (PK null rate + uniqueness rate)
-- FK health (sample orphan rate)
-- Stats: top values, distinct count, min/max/mean, p50/p95 (sample-based)
+## MVP endpoints
+- Datasources: `GET/POST /api/datasources`, `POST /api/datasources/test`
+- Scans: `POST /api/scans`, `GET /api/scans/{id}`, `GET /api/scans/recent`
+- Explorer: `GET /api/tables?scan_run_id=...`
+- Table tabs:
+  - `GET /api/tables/{table_id}/columns`
+  - `GET /api/tables/{table_id}/relationships`
+  - `GET /api/tables/{table_id}/quality`
+  - `GET /api/tables/{table_id}/docs`
+  - `GET /api/tables/{table_id}/export?format=md|json`
+- Chat: `POST /api/chat`
 
-### 4) AI-enhanced business documentation
-- Table purpose + grain (“one row means…”)
-- Common joins (derived from FK graph)
-- Usage notes + warnings (grounded in measured metrics)
-
-### 5) Documentation artifacts
-- Export **Markdown** + **JSON**
-- Store snapshots for history, diff, and incremental updates
-
-### 6) Conversational chat interface
-- Ask natural language questions about schema and joins
-- Answers cite referenced tables/columns and can suggest **SELECT-only**
+## Notes (hackathon)
+- For speed, datasource passwords are stored in plaintext in the metadata DB. Replace with secrets/encryption later.
+- Scans run synchronously for demo simplicity. Swap to async worker later.
